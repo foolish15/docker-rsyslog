@@ -1,0 +1,44 @@
+version: "3.5"
+services:
+  rsyslog:
+    image: rsyslog/syslog_appliance_alpine:latest
+    volumes:
+      - "./rsyslog.conf:/etc/rsyslog.conf"
+      - "./rsyslog.d:/etc/rsyslog.d"
+      - "./logrotate.d:/etc/logrotate.d"
+      - "./rsyslog:/var/spool/rsyslog"
+      - "./log/:/var/log/docker/:z"
+    ports:
+      - "514:514"
+    networks:
+      - rsyslog-network
+  nginx:
+    image: nginx:alpine
+    depends_on:
+      - rsyslog
+    ports:
+      - "80:80"
+    networks:
+      - rsyslog-network
+    logging:
+      driver: "syslog"
+      options:  
+        syslog-address: "tcp://localhost:514"
+        tag: "nginx"
+  httpd:
+    image: httpd:alpine
+    depends_on:
+      - rsyslog
+    ports:
+      - "8080:80"
+    networks:
+      - rsyslog-network
+    logging:
+      driver: "syslog"
+      options:  
+        syslog-address: "tcp://localhost:514"
+        tag: "httpd"
+networks:
+  rsyslog-network:
+    name: rsyslog-network
+    driver: bridge
