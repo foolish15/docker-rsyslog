@@ -1,15 +1,16 @@
 version: "3.5"
 services:
   rsyslog:
-    image: rsyslog/syslog_appliance_alpine:latest
+    image: vmware/harbor-log:v1.5.2
     volumes:
-      - "./rsyslog.conf:/etc/rsyslog.conf"
-      - "./rsyslog.d:/etc/rsyslog.d"
+      # - "./rsyslog.conf:/etc/rsyslog.conf"
+      # - "./rsyslog.d:/etc/rsyslog.d"
       - "./logrotate.d:/etc/logrotate.d"
-      - "./rsyslog:/var/spool/rsyslog"
+      # - "./rsyslog:/var/spool/rsyslog"
       - "./log/:/var/log/docker/:z"
     ports:
-      - "514:514"
+      - "127.0.0.1:514:10514"
+      - "127.0.0.1:514:10514/udp"
     networks:
       - rsyslog-network
   nginx:
@@ -23,7 +24,7 @@ services:
     logging:
       driver: "syslog"
       options:  
-        syslog-address: "tcp://localhost:514"
+        syslog-address: "udp://127.0.0.1:514"
         tag: "nginx"
   httpd:
     image: httpd:alpine
@@ -36,7 +37,7 @@ services:
     logging:
       driver: "syslog"
       options:  
-        syslog-address: "tcp://localhost:514"
+        syslog-address: "udp://127.0.0.1:514"
         tag: "httpd"
 networks:
   rsyslog-network:
